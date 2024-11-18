@@ -50,7 +50,7 @@ def recognize_faces(image):
       # Draw rectangle/bounding boxes around the face
       cv.rectangle(image, (x, y), (x+w, y+h), (255, 0, 255), 7)
       # Display the name
-      cv.putText(image, name, (x, y-20), cv.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 3)
+      cv.putText(image, name, (x, y-20), cv.FONT_HERSHEY_SIMPLEX, 2.2, (255, 255, 255), 3)
 
     return image, recognized_faces
 
