@@ -15,7 +15,7 @@ haarcascade = cv.CascadeClassifier("models/haarcascade_frontalface_default.xml")
 facenet = FaceNet()
 
 # Load face embeddings and labels
-data = np.load("models/face_embeddings.npz")
+data = np.load("models/faces_embeddings.npz")
 embeddings = data['embeddings']
 labels = data['labels']
 
