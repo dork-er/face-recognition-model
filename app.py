@@ -30,7 +30,7 @@ with open("models/svm_model.pkl", "rb") as f:
 # Define confidence thresholds
 CONFIDENCE_THRESHOLD = 0.8
 UNKNOWN_THRESHOLD = 1.0
-EXTREMELY_LOW_CONFIDENCE_THRESHOLD = 0.2
+EXTREMELY_LOW_CONFIDENCE_THRESHOLD = 0.4
 
 def recognize_faces(image):
     recognized_faces = []
