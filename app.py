@@ -27,6 +27,10 @@ encoder.fit(labels)
 with open("models/svm_model.pkl", "rb") as f:
     svm_model = pickle.load(f)
 
+# Define confidence threshold and unknown class logic
+CONFIDENCE_THRESHOLD = 0.5  # Set a confidence threshold (tune as necessary)
+UNKNOWN_THRESHOLD = 1.0  # Set an embedding distance threshold for "unknown" classification
+
 def recognize_faces(image):
     recognized_faces = []
     face_regions = preprocess_faces(image, haarcascade)
@@ -36,21 +40,26 @@ def recognize_faces(image):
         face_img = np.expand_dims(face_img, axis=0)
         embedding = facenet.embeddings(face_img)
 
-        # Predict
-        prediction = svm_model.predict(embedding)
-        predicted_name = encoder.inverse_transform(prediction)[0]
-        if predicted_name:
-            predicted_name = str(predicted_name).replace('_', ' ')
-        else:
+        # Predict probabilities and class
+        probabilities = svm_model.decision_function(embedding)
+        max_prob = np.max(probabilities) if len(probabilities) > 0 else 0
+        predicted_class = svm_model.predict(embedding)[0]
+        predicted_name = encoder.inverse_transform([predicted_class])[0]
+
+        # Determine if face is unknown or low-confidence
+        if max_prob < CONFIDENCE_THRESHOLD or np.min(np.linalg.norm(embedding - embeddings, axis=1)) > UNKNOWN_THRESHOLD:
             predicted_name = "Unknown"
-        recognized_faces.append((x, y, w, h, predicted_name))
+
+        # Append face data if not low-confidence
+        if max_prob >= CONFIDENCE_THRESHOLD:
+            recognized_faces.append((x, y, w, h, predicted_name))
 
     # Annotate the image
     for (x, y, w, h, name) in recognized_faces:
-      # Draw rectangle/bounding boxes around the face
-      cv.rectangle(image, (x, y), (x+w, y+h), (255, 0, 255), 7)
-      # Display the name
-      cv.putText(image, name, (x, y-20), cv.FONT_HERSHEY_SIMPLEX, 2.2, (255, 255, 255), 3)
+        # Draw rectangle/bounding boxes around the face
+        cv.rectangle(image, (x, y), (x+w, y+h), (255, 0, 255), 7)
+        # Display the name
+        cv.putText(image, name, (x, y-20), cv.FONT_HERSHEY_SIMPLEX, 2.2, (255, 255, 255), 3)
 
     return image, recognized_faces
 
