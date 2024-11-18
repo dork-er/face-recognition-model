@@ -62,12 +62,12 @@ if uploaded_file is not None:
     st.image(image, caption="Uploaded Image", use_column_width=True)
     st.write("Processing...")
 
-    annotated_image, names = recognize_faces(image)
+    annotated_image, recognized_faces = recognize_faces(image)
     st.image(annotated_image, caption="Processed Image", use_column_width=True)
 
-    if names:
+    if recognized_faces:
         st.success("Recognized Faces:")
-        for idx, name in enumerate(names):
-            st.write(f"{idx+1}: {name[-1]}")  # Name is the last item in the tuple
+        for idx, face in enumerate(recognized_faces):
+            st.write(f"{idx+1}: {face[-1]}")  # Name is the last item in the tuple
     else:
         st.warning("No faces recognized.")
