@@ -58,7 +58,7 @@ uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png
 if uploaded_file is not None:
     file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
     image = cv.imdecode(file_bytes, cv.IMREAD_COLOR)
-
+    image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
     st.image(image, caption="Uploaded Image", use_column_width=True)
     st.write("Processing...")
 
