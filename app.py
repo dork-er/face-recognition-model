@@ -28,18 +28,24 @@ with open("models/svm_model.pkl", "rb") as f:
     svm_model = pickle.load(f)
 
 # Define confidence thresholds
-CONFIDENCE_THRESHOLD = 0.8
+CONFIDENCE_THRESHOLD = 0.85
 UNKNOWN_THRESHOLD = 1.0
 EXTREMELY_LOW_CONFIDENCE_THRESHOLD = 0.4
 
 def recognize_faces(image):
     recognized_faces = []
     face_regions = preprocess_faces(image, haarcascade)
+
     for (x, y, w, h, face_img) in face_regions:
-        # Resize and preprocess
+        # Resize and preprocess the face
         face_img = cv.resize(face_img, (160, 160))
         face_img = np.expand_dims(face_img, axis=0)
         embedding = facenet.embeddings(face_img)
+
+        # Skip detection if embedding distance is very high (non-face)
+        embedding_distances = np.linalg.norm(embedding - embeddings, axis=1)
+        if np.min(embedding_distances) > UNKNOWN_THRESHOLD * 2:  # Filter non-face embeddings
+            continue
 
         # Predict probabilities and class
         probabilities = svm_model.decision_function(embedding)
@@ -47,23 +53,22 @@ def recognize_faces(image):
         predicted_class = svm_model.predict(embedding)[0]
         predicted_name = encoder.inverse_transform([predicted_class])[0]
 
-        # Skip extremely low confidence faces
+        # Skip extremely low-confidence predictions
         if max_prob < EXTREMELY_LOW_CONFIDENCE_THRESHOLD:
             continue
 
-        # Determine if face is unknown or low-confidence
-        if max_prob < CONFIDENCE_THRESHOLD or np.min(np.linalg.norm(embedding - embeddings, axis=1)) > UNKNOWN_THRESHOLD:
+        # Determine if face is "Unknown"
+        if max_prob < CONFIDENCE_THRESHOLD or np.min(embedding_distances) > UNKNOWN_THRESHOLD:
             predicted_name = "Unknown"
 
-        # Append face data
+        # Append valid face data
         recognized_faces.append((x, y, w, h, predicted_name))
 
     # Annotate the image
     for (x, y, w, h, name) in recognized_faces:
-        # Draw rectangle/bounding boxes around the face
-        cv.rectangle(image, (x, y), (x+w, y+h), (255, 0, 255), 7)
-        # Display the name
-        cv.putText(image, name, (x, y-10), cv.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        color = (0, 255, 0) if name != "Unknown" else (0, 0, 255)  # Green for known, Red for unknown
+        cv.rectangle(image, (x, y), (x + w, y + h), color, 2)
+        cv.putText(image, name, (x, y-20), cv.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 3)
 
     return image, recognized_faces
 
