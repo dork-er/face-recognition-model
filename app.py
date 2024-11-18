@@ -38,7 +38,9 @@ def recognize_faces(image):
 
         # Predict
         prediction = svm_model.predict(embedding)
+        st.write(f"Debug: Prediction: {prediction}")
         predicted_name = encoder.inverse_transform(prediction)[0]
+        st.write(f"Debug: Predicted Name: {predicted_name}")
         if predicted_name:
             predicted_name = str(predicted_name).replace('_', ' ')
         else:
