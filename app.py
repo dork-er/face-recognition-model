@@ -68,6 +68,8 @@ if uploaded_file is not None:
     if recognized_faces:
         st.success("Recognized Faces:")
         for idx, face in enumerate(recognized_faces):
+            st.write(f"Debug: {face}")  # Debug statement to print the entire tuple
+            st.write(f"Debug:{idx}")
             st.write(f"{idx+1}: {face[-1]}")  # Name is the last item in the tuple
     else:
         st.warning("No faces recognized.")
