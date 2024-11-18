@@ -14,22 +14,22 @@ st.write("Upload an image to detect and recognize multiple faces.")
 haarcascade = cv.CascadeClassifier("models/haarcascade_frontalface_default.xml")
 facenet = FaceNet()
 
-# Load SVM model and encoder
-try:
-    svm_model = pickle.load(open("models/svm_model.pkl", 'rb'))
-    encoder = LabelEncoder()
-    encoder.classes_ = svm_model.classes_
-except Exception as e:
-    st.error(f"Error loading models: {e}")
-    st.stop()
+# Load face embeddings and labels
+data = np.load("models/face_embeddings.npz")
+embeddings = data['embeddings']
+labels = data['labels']
+
+# Fit the LabelEncoder with the labels
+encoder = LabelEncoder()
+encoder.fit(labels)
+
+# Load the SVM model
+with open("models/svm_model.pkl", "rb") as f:
+    svm_model = pickle.load(f)
 
 def recognize_faces(image):
-    # Detect and preprocess all faces in the image
-    face_regions = preprocess_faces(image, haarcascade)
-    if len(face_regions) == 0:
-        return image, []
-
     recognized_faces = []
+    face_regions = preprocess_faces(image, haarcascade)
     for (x, y, w, h, face_img) in face_regions:
         # Resize and preprocess
         face_img = cv.resize(face_img, (160, 160))
@@ -70,8 +70,7 @@ if uploaded_file is not None:
     if recognized_faces:
         st.success("Recognized Faces:")
         for idx, face in enumerate(recognized_faces):
-            st.write(f"Debug: {face}")  # Debug statement to print the entire tuple
-            st.write(f"Debug:{idx}")
             st.write(f"{idx+1}: {face[-1]}")  # Name is the last item in the tuple
+            st.write(f"Debug: {face}")  # Debug statement to print the entire tuple
     else:
         st.warning("No faces recognized.")
