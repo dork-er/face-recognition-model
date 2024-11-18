@@ -40,7 +40,7 @@ def recognize_faces(image):
         prediction = svm_model.predict(embedding)
         predicted_name = encoder.inverse_transform(prediction)[0]
         if predicted_name:
-            predicted_name = predicted_name.replace('_', ' ')
+            predicted_name = str(predicted_name).replace('_', ' ')
         else:
             predicted_name = "Unknown"
         recognized_faces.append((x, y, w, h, predicted_name))
