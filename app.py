@@ -28,7 +28,7 @@ with open("models/svm_model.pkl", "rb") as f:
     svm_model = pickle.load(f)
 
 # Define confidence threshold and unknown class logic
-CONFIDENCE_THRESHOLD = 0.5  # Set a confidence threshold (tune as necessary)
+CONFIDENCE_THRESHOLD = 0.7  # Set a confidence threshold (tune as necessary)
 UNKNOWN_THRESHOLD = 1.0  # Set an embedding distance threshold for "unknown" classification
 
 def recognize_faces(image):
