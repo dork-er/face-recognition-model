@@ -66,8 +66,8 @@ def recognize_faces(image):
 
     # Annotate the image
     for (x, y, w, h, name) in recognized_faces:
-        color = (0, 255, 0) if name != "Unknown" else (0, 0, 255)  # Green for known, Red for unknown
-        cv.rectangle(image, (x, y), (x + w, y + h), color, 2)
+        color = (0, 255, 0) if name != "Unknown" else (255, 0, 0)  # Green for known, Red for unknown
+        cv.rectangle(image, (x, y), (x + w, y + h), color, 7)
         cv.putText(image, name, (x, y-20), cv.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 3)
 
     return image, recognized_faces
