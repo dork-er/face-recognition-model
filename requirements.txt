@@ -2,7 +2,7 @@ streamlit
 keras-facenet
 mtcnn
 opencv-python-headless
-# opencv-python
+opencv-python
 scikit-learn
 numpy
 tensorflow
