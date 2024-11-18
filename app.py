@@ -16,7 +16,6 @@ facenet = FaceNet()
 
 # Load face embeddings and labels
 data = np.load("models/faces_embeddings.npz")
-st.write("Keys in the .npz file:", data.files)  # Debug statement to list keys
 embeddings = data['arr_0']
 labels = data['arr_1']
 
@@ -50,8 +49,10 @@ def recognize_faces(image):
 
     # Annotate the image
     for (x, y, w, h, name) in recognized_faces:
-        cv.rectangle(image, (x, y), (x+w, y+h), (255, 0, 255), 3)
-        cv.putText(image, name, (x, y-10), cv.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+      # Draw rectangle/bounding boxes around the face
+      cv.rectangle(image, (x, y), (x+w, y+h), (255, 0, 255), 3)
+      # Display the name
+      cv.putText(image, name, (x, y-10), cv.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
     return image, recognized_faces
 
@@ -72,6 +73,5 @@ if uploaded_file is not None:
         st.success("Recognized Faces:")
         for idx, face in enumerate(recognized_faces):
             st.write(f"{idx+1}: {face[-1]}")  # Name is the last item in the tuple
-            st.write(f"Debug: {face}")  # Debug statement to print the entire tuple
     else:
         st.warning("No faces recognized.")
