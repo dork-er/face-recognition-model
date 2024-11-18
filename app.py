@@ -16,6 +16,7 @@ facenet = FaceNet()
 
 # Load face embeddings and labels
 data = np.load("models/faces_embeddings.npz")
+st.write("Keys in the .npz file:", data.files)
 embeddings = data['embeddings']
 labels = data['labels']
 
