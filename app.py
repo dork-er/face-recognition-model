@@ -5,6 +5,13 @@ import pickle
 from keras_facenet import FaceNet
 from sklearn.preprocessing import LabelEncoder
 from utils.preprocess import preprocess_faces
+from fastapi import FastAPI, File, UploadFile
+from starlette.responses import JSONResponse
+import uvicorn
+from io import BytesIO
+
+# Initialize FastAPI app
+api_app = FastAPI()
 
 # Initialize models
 st.title("Face Recognition System")
@@ -32,6 +39,7 @@ CONFIDENCE_THRESHOLD = 0.85
 UNKNOWN_THRESHOLD = 1.0
 EXTREMELY_LOW_CONFIDENCE_THRESHOLD = 0.4
 
+# Function to recognize faces
 def recognize_faces(image):
     recognized_faces = []
     face_regions = preprocess_faces(image, haarcascade)
@@ -64,31 +72,29 @@ def recognize_faces(image):
         # Append valid face data
         recognized_faces.append((x, y, w, h, predicted_name))
 
-    # Annotate the image
-    for (x, y, w, h, name) in recognized_faces:
-        color = (0, 255, 0) if name != "Unknown" else (255, 0, 0)  # Green for known, Red for unknown
-        cv.rectangle(image, (x, y), (x + w, y + h), color, 7)
-        cv.putText(image, name, (x, y-20), cv.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 3)
+    return recognized_faces
 
-    return image, recognized_faces
-
-# Upload and process image
-uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
-
-if uploaded_file is not None:
-    file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
-    image = cv.imdecode(file_bytes, cv.IMREAD_COLOR)
+# API endpoint for image processing
+@api_app.post("/upload")
+async def process_image(file: UploadFile = File(...)):
+    # Read image file
+    file_bytes = await file.read()
+    nparr = np.frombuffer(file_bytes, np.uint8)
+    image = cv.imdecode(nparr, cv.IMREAD_COLOR)
     image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-    st.image(image, caption="Uploaded Image", use_column_width=True)
-    st.write("Processing...")
+    
+    # Recognize faces
+    recognized_faces = recognize_faces(image)
 
-    annotated_image, recognized_faces = recognize_faces(image)
-    st.image(annotated_image, caption="Processed Image", use_column_width=True)
+    # Return response
+    response_data = {
+        "recognized_faces": recognized_faces,
+        "num_faces": len(recognized_faces),
+        "threat_level": "Low" if all(name != "Unknown" for _, _, _, _, name in recognized_faces) else "High"
+    }
 
-    if recognized_faces:
-        st.success("Recognized Faces:")
-        for idx, face in enumerate(recognized_faces):
-            st.write(f"{idx+1}: {face[-1]}")  # Name is the last item in the tuple
-            st.write(f"Debug: {face}")  # Debug statement to print the entire tuple
-    else:
-        st.warning("No faces recognized.")
+    return JSONResponse(content=response_data)
+
+# Run the API server with Uvicorn
+if __name__ == "__main__":
+    uvicorn.run(api_app, host="0.0.0.0", port=5000)
