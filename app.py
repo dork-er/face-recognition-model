@@ -27,9 +27,10 @@ encoder.fit(labels)
 with open("models/svm_model.pkl", "rb") as f:
     svm_model = pickle.load(f)
 
-# Define confidence threshold and unknown class logic
-CONFIDENCE_THRESHOLD = 0.7  # Set a confidence threshold (tune as necessary)
-UNKNOWN_THRESHOLD = 1.0  # Set an embedding distance threshold for "unknown" classification
+# Define confidence thresholds
+CONFIDENCE_THRESHOLD = 0.8
+UNKNOWN_THRESHOLD = 1.0
+EXTREMELY_LOW_CONFIDENCE_THRESHOLD = 0.2
 
 def recognize_faces(image):
     recognized_faces = []
@@ -46,20 +47,23 @@ def recognize_faces(image):
         predicted_class = svm_model.predict(embedding)[0]
         predicted_name = encoder.inverse_transform([predicted_class])[0]
 
+        # Skip extremely low confidence faces
+        if max_prob < EXTREMELY_LOW_CONFIDENCE_THRESHOLD:
+            continue
+
         # Determine if face is unknown or low-confidence
         if max_prob < CONFIDENCE_THRESHOLD or np.min(np.linalg.norm(embedding - embeddings, axis=1)) > UNKNOWN_THRESHOLD:
             predicted_name = "Unknown"
 
-        # Append face data if not low-confidence
-        if max_prob >= CONFIDENCE_THRESHOLD:
-            recognized_faces.append((x, y, w, h, predicted_name))
+        # Append face data
+        recognized_faces.append((x, y, w, h, predicted_name))
 
     # Annotate the image
     for (x, y, w, h, name) in recognized_faces:
         # Draw rectangle/bounding boxes around the face
         cv.rectangle(image, (x, y), (x+w, y+h), (255, 0, 255), 7)
         # Display the name
-        cv.putText(image, name, (x, y-20), cv.FONT_HERSHEY_SIMPLEX, 2.2, (255, 255, 255), 3)
+        cv.putText(image, name, (x, y-10), cv.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
     return image, recognized_faces
 
@@ -80,5 +84,6 @@ if uploaded_file is not None:
         st.success("Recognized Faces:")
         for idx, face in enumerate(recognized_faces):
             st.write(f"{idx+1}: {face[-1]}")  # Name is the last item in the tuple
+            st.write(f"Debug: {face}")  # Debug statement to print the entire tuple
     else:
         st.warning("No faces recognized.")
