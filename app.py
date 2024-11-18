@@ -16,9 +16,9 @@ facenet = FaceNet()
 
 # Load face embeddings and labels
 data = np.load("models/faces_embeddings.npz")
-st.write("Keys in the .npz file:", data.files)
-embeddings = data['embeddings']
-labels = data['labels']
+st.write("Keys in the .npz file:", data.files)  # Debug statement to list keys
+embeddings = data['arr_0']
+labels = data['arr_1']
 
 # Fit the LabelEncoder with the labels
 encoder = LabelEncoder()
