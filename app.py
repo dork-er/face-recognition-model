@@ -5,15 +5,15 @@ import pickle
 from keras_facenet import FaceNet
 from sklearn.preprocessing import LabelEncoder
 from utils.preprocess import preprocess_faces
-from fastapi import FastAPI, File, UploadFile
-from starlette.responses import JSONResponse
-import uvicorn
+# from fastapi import FastAPI, File, UploadFile
+# from starlette.responses import JSONResponse
+# import uvicorn
 from io import BytesIO
 
 # Initialize FastAPI app
-api_app = FastAPI()
+# api_app = FastAPI()
 
-# Initialize models
+# Titles and description
 st.title("Face Recognition System")
 st.write("Upload an image to detect and recognize multiple faces.")
 
@@ -74,27 +74,27 @@ def recognize_faces(image):
 
     return recognized_faces
 
-# API endpoint for image processing
-@api_app.post("/upload")
-async def process_image(file: UploadFile = File(...)):
-    # Read image file
-    file_bytes = await file.read()
-    nparr = np.frombuffer(file_bytes, np.uint8)
-    image = cv.imdecode(nparr, cv.IMREAD_COLOR)
-    image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+# # API endpoint for image processing
+# @api_app.post("/upload")
+# async def process_image(file: UploadFile = File(...)):
+#     # Read image file
+#     file_bytes = await file.read()
+#     nparr = np.frombuffer(file_bytes, np.uint8)
+#     image = cv.imdecode(nparr, cv.IMREAD_COLOR)
+#     image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
     
-    # Recognize faces
-    recognized_faces = recognize_faces(image)
+#     # Recognize faces
+#     recognized_faces = recognize_faces(image)
 
-    # Return response
-    response_data = {
-        "recognized_faces": recognized_faces,
-        "num_faces": len(recognized_faces),
-        "threat_level": "Low" if all(name != "Unknown" for _, _, _, _, name in recognized_faces) else "High"
-    }
+#     # Return response
+#     response_data = {
+#         "recognized_faces": recognized_faces,
+#         "num_faces": len(recognized_faces),
+#         "threat_level": "Low" if all(name != "Unknown" for _, _, _, _, name in recognized_faces) else "High"
+#     }
 
-    return JSONResponse(content=response_data)
+#     return JSONResponse(content=response_data)
 
-# Run the API server with Uvicorn
-if __name__ == "__main__":
-    uvicorn.run(api_app, host="0.0.0.0", port=5000)
+# # Run the API server with Uvicorn
+# if __name__ == "__main__":
+#     uvicorn.run(api_app, host="0.0.0.0", port=5000)
