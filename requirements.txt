@@ -8,3 +8,4 @@ tensorflow
 fastapi
 uvicorn
 starlette
+python-multipart
