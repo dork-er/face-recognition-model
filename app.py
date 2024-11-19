@@ -22,7 +22,7 @@ haarcascade = cv.CascadeClassifier("models/haarcascade_frontalface_default.xml")
 facenet = FaceNet()
 
 # Load face embeddings and labels
-data = np.load("models/faces_embeddings.npz")
+data = np.load("models/faces_embeddings_144classes.npz")
 embeddings = data['arr_0']
 labels = data['arr_1']
 
@@ -31,7 +31,7 @@ encoder = LabelEncoder()
 encoder.fit(labels)
 
 # Load the SVM model
-with open("models/svm_model.pkl", "rb") as f:
+with open("models/svm_model_144classes.pkl", "rb") as f:
     svm_model = pickle.load(f)
 
 # Define confidence thresholds
