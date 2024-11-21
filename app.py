@@ -73,19 +73,24 @@ def recognize_faces(image):
 
     return image, recognized_faces
 
-def process_video(video_path):
+def process_video(video_path, skip_frames=5):
     video = cv.VideoCapture(video_path)
     annotated_frames = []
+    frame_count = 0
 
     while video.isOpened():
         ret, frame = video.read()
         if not ret:
             break
 
-        # Convert frame to RGB for processing
-        frame_rgb = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
-        annotated_frame, _ = recognize_faces(frame_rgb)
-        annotated_frames.append(cv.cvtColor(annotated_frame, cv.COLOR_RGB2BGR))
+        # Skip frames to save processing time
+        if frame_count % skip_frames == 0:
+            # Convert frame to RGB for processing
+            frame_rgb = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
+            annotated_frame, _ = recognize_faces(frame_rgb)
+            annotated_frames.append(cv.cvtColor(annotated_frame, cv.COLOR_RGB2BGR))
+
+        frame_count += 1
 
     video.release()
     return annotated_frames
