@@ -5,17 +5,11 @@ import pickle
 from keras_facenet import FaceNet
 from sklearn.preprocessing import LabelEncoder
 from utils.preprocess import preprocess_faces
-# from fastapi import FastAPI, File, UploadFile
-# from starlette.responses import JSONResponse
-# import uvicorn
 from io import BytesIO
-
-# Initialize FastAPI app
-# api_app = FastAPI()
 
 # Titles and description
 st.title("Face Recognition System")
-st.write("Upload an image to detect and recognize multiple faces.")
+st.write("Upload an image or a video to detect and recognize multiple faces.")
 
 # Load Haarcascade and SVM model
 haarcascade = cv.CascadeClassifier("models/haarcascade_frontalface_default.xml")
@@ -51,7 +45,7 @@ def recognize_faces(image):
 
         # Skip detection if embedding distance is very high (non-face)
         embedding_distances = np.linalg.norm(embedding - embeddings, axis=1)
-        if np.min(embedding_distances) > UNKNOWN_THRESHOLD * 2:  # Filter non-face embeddings
+        if np.min(embedding_distances) > UNKNOWN_THRESHOLD * 2:
             continue
 
         # Predict probabilities and class
@@ -73,54 +67,72 @@ def recognize_faces(image):
 
     # Annotate the image
     for (x, y, w, h, name) in recognized_faces:
-        color = (0, 255, 0) if name != "Unknown" else (255, 0, 0)  # Green for known, Red for unknown
+        color = (0, 255, 0) if name != "Unknown" else (255, 0, 0)
         cv.rectangle(image, (x, y), (x + w, y + h), color, 7)
         cv.putText(image, name, (x, y-20), cv.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 3)
 
     return image, recognized_faces
 
-# Upload and process image
-uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+def process_video(video_path):
+    video = cv.VideoCapture(video_path)
+    annotated_frames = []
+
+    while video.isOpened():
+        ret, frame = video.read()
+        if not ret:
+            break
+
+        # Convert frame to RGB for processing
+        frame_rgb = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
+        annotated_frame, _ = recognize_faces(frame_rgb)
+        annotated_frames.append(cv.cvtColor(annotated_frame, cv.COLOR_RGB2BGR))
+
+    video.release()
+    return annotated_frames
+
+# Upload image or video
+uploaded_file = st.file_uploader("Choose an image or video...", type=["jpg", "jpeg", "png", "mp4", "avi"])
 
 if uploaded_file is not None:
-    file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
-    image = cv.imdecode(file_bytes, cv.IMREAD_COLOR)
-    image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-    st.image(image, caption="Uploaded Image", use_column_width=True)
-    st.write("Processing...")
+    if uploaded_file.type.startswith('image/'):
+        # Process image
+        file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
+        image = cv.imdecode(file_bytes, cv.IMREAD_COLOR)
+        image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+        st.image(image, caption="Uploaded Image", use_column_width=True)
+        st.write("Processing...")
 
-    annotated_image, recognized_faces = recognize_faces(image)
-    st.image(annotated_image, caption="Processed Image", use_column_width=True)
+        annotated_image, recognized_faces = recognize_faces(image)
+        st.image(annotated_image, caption="Processed Image", use_column_width=True)
 
-    if recognized_faces:
-        st.success("Recognized Faces:")
-        for idx, face in enumerate(recognized_faces):
-            st.write(f"{idx+1}: {face[-1]}")  # Name is the last item in the tuple
-            st.write(f"Debug: {face}")  # Debug statement to print the entire tuple
-    else:
-        st.warning("No faces recognized.")
+        if recognized_faces:
+            st.success("Recognized Faces:")
+            for idx, face in enumerate(recognized_faces):
+                st.write(f"{idx+1}: {face[-1]}")
+        else:
+            st.warning("No faces recognized.")
 
-# # API endpoint for image processing
-# @api_app.post("/upload")
-# async def process_image(file: UploadFile = File(...)):
-#     # Read image file
-#     file_bytes = await file.read()
-#     nparr = np.frombuffer(file_bytes, np.uint8)
-#     image = cv.imdecode(nparr, cv.IMREAD_COLOR)
-#     image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-    
-#     # Recognize faces
-#     recognized_faces = recognize_faces(image)
+    elif uploaded_file.type.startswith('video/'):
+        # Process video
+        temp_video_path = "temp_video.mp4"
+        with open(temp_video_path, "wb") as f:
+            f.write(uploaded_file.read())
 
-#     # Return response
-#     response_data = {
-#         "recognized_faces": recognized_faces,
-#         "num_faces": len(recognized_faces),
-#         "threat_level": "Low" if all(name != "Unknown" for _, _, _, _, name in recognized_faces) else "High"
-#     }
+        st.video(temp_video_path)
 
-#     return JSONResponse(content=response_data)
+        st.write("Processing video...")
+        annotated_frames = process_video(temp_video_path)
 
-# # Run the API server with Uvicorn
-# if __name__ == "__main__":
-#     uvicorn.run(api_app, host="0.0.0.0", port=5000)
+        # Save annotated frames to a video
+        output_video_path = "annotated_video.mp4"
+        height, width, _ = annotated_frames[0].shape
+        fourcc = cv.VideoWriter_fourcc(*'mp4v')
+        out = cv.VideoWriter(output_video_path, fourcc, 20.0, (width, height))
+
+        for frame in annotated_frames:
+            out.write(frame)
+
+        out.release()
+
+        # Display the annotated video
+        st.video(output_video_path)
