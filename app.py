@@ -91,7 +91,8 @@ def process_video(video_path):
     return annotated_frames
 
 # Upload image or video
-uploaded_file = st.file_uploader("Choose an image or video...", type=["jpg", "jpeg", "png", "mp4", "avi"])
+uploaded_file = st.file_uploader("Choose an image or video...", type=["jpg", "jpeg", "png", "mp4", "avi", "mov", "mkv"])
+
 
 if uploaded_file is not None:
     if uploaded_file.type.startswith('image/'):
